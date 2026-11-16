@@ -28,7 +28,7 @@ jobs:
       # A copy of this repository with no Fly token (a fork, or one that is deployed by hand) has nothing to do here.
       - id: ready
         run: if [ -n "$FLY_API_TOKEN" ]; then echo "yes=1" >> "$GITHUB_OUTPUT"; else echo "No FLY_API_TOKEN secret, so nothing is deployed."; fi
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.ready.outputs.yes == '1'
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
