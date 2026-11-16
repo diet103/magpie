@@ -1,0 +1,39 @@
+name: Something is not working
+description: A page, the connector or setup did something wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please leave out anything personal: no passwords, keys, addresses of your own copy, or what you saved.
+        For a security problem, do not open an issue. See SECURITY.md.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to see it
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options:
+        - Web app on a phone
+        - Web app on a computer
+        - Through Claude (the connector)
+        - Setup or updating
+        - Something else
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server log lines, if any
+      description: Lines with "level":"error" from `fly logs`. They do not contain what anyone said or saved.
+      render: text

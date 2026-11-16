@@ -1,0 +1,33 @@
+[
+  {
+    "name": "what Thai places have we liked?",
+    "messages": ["what Thai places have we liked?"],
+    "expect": { "calls": ["search_entries"], "no_writes": true, "reply_contains": ["Thai Basil"], "reply_not_contains": ["Siam Garden was"] }
+  },
+  {
+    "name": "what did I say about that taco place",
+    "user": "sam",
+    "messages": ["what did I say about that taco place a few weeks ago?"],
+    "expect": { "no_writes": true, "reply_contains": ["salty"] }
+  },
+  {
+    "name": "how many restaurants rated 4 or higher",
+    "messages": ["how many restaurants have we rated 4 or higher?"],
+    "expect": { "no_writes": true, "reply_contains": ["3"] }
+  },
+  {
+    "name": "still want to try",
+    "messages": ["which restaurants do we still want to try?"],
+    "expect": { "no_writes": true, "reply_contains": ["Siam Garden"] }
+  },
+  {
+    "name": "who added it",
+    "messages": ["who added Lemongrass?"],
+    "expect": { "no_writes": true, "reply_contains": ["Sam"] }
+  },
+  {
+    "name": "questions never write",
+    "messages": ["have we been to any Mexican places?"],
+    "expect": { "no_writes": true, "reply_contains": ["Tacos El Gordo"] }
+  }
+]

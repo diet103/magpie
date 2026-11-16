@@ -1,0 +1,14 @@
+# Continuous replication of tracker.db to Cloudflare R2 (auth.db is deliberately not replicated).
+# Credentials come from LITESTREAM_ACCESS_KEY_ID and LITESTREAM_SECRET_ACCESS_KEY (Fly secrets).
+snapshot:
+  interval: 24h
+  retention: 720h # 30 days of point-in-time restore
+
+dbs:
+  - path: /data/tracker.db
+    replica:
+      type: s3
+      bucket: ${R2_BUCKET}
+      path: litestream/tracker.db
+      endpoint: https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+      region: auto

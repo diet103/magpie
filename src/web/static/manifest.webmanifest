@@ -1,0 +1,68 @@
+{
+  "name": "Magpie",
+  "short_name": "Magpie",
+  "description": "Everything you've told Claude to remember: places, movies, books, gift ideas.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f6f2",
+  "theme_color": "#1f6f5c",
+  "shortcuts": [
+    {
+      "name": "Ask Magpie",
+      "short_name": "Ask",
+      "url": "/ask?source=shortcut",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "photo",
+          "accept": [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "application/pdf"
+          ]
+        }
+      ]
+    }
+  }
+}

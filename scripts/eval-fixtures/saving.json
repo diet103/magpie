@@ -1,0 +1,194 @@
+[
+  {
+    "name": "new restaurant with a rating",
+    "messages": ["we tried Banh Mi Bistro on Platte tonight, the lemongrass pork was great, 4.5 out of 5"],
+    "expect": {
+      "calls": ["create_entry"],
+      "sql": [
+        { "q": "SELECT count(*) FROM entries WHERE title_key LIKE '%banh mi bistro%' AND deleted_at IS NULL", "eq": 1 },
+        { "q": "SELECT c.slug FROM entries e JOIN collections c ON c.id = e.collection_id WHERE e.title_key LIKE '%banh mi bistro%'", "eq": "restaurants" },
+        { "q": "SELECT rating FROM entries WHERE title_key LIKE '%banh mi bistro%'", "eq": 4.5 },
+        { "q": "SELECT last_logged_on FROM entries WHERE title_key LIKE '%banh mi bistro%'", "eq": "{{today}}" }
+      ],
+      "raw_text_contains": ["lemongrass pork"],
+      "reply_max_chars": 200,
+      "asks_question": false
+    }
+  },
+  {
+    "name": "repeat visit becomes a log, not a new entry",
+    "messages": ["we went back to pho 54 tonight, broth was better this time, 4 stars"],
+    "expect": {
+      "calls": ["add_log"],
+      "not_calls": ["create_entry"],
+      "sql": [
+        { "q": "SELECT count(*) FROM entries WHERE title_key LIKE 'pho 54%' AND deleted_at IS NULL", "eq": 1 },
+        { "q": "SELECT log_count FROM entries WHERE title_key = 'pho 54'", "eq": 2 },
+        { "q": "SELECT last_logged_on FROM entries WHERE title_key = 'pho 54'", "eq": "{{today}}" }
+      ],
+      "raw_text_contains": ["broth was better"],
+      "reply_max_chars": 200
+    }
+  },
+  {
+    "name": "want to try (no visit yet)",
+    "messages": ["Sam says we should try Sushi Koi sometime"],
+    "expect": {
+      "calls": ["create_entry"],
+      "sql": [
+        { "q": "SELECT json_extract(fields, '$.status') FROM entries WHERE title_key LIKE '%sushi koi%'", "eq": "want_to_try" },
+        { "q": "SELECT log_count FROM entries WHERE title_key LIKE '%sushi koi%'", "eq": 0 }
+      ],
+      "reply_max_chars": 200
+    }
+  },
+  {
+    "name": "no name: ask one short question",
+    "messages": ["we went to that new ramen place downtown tonight, it was great"],
+    "expect": { "no_writes": true, "asks_question": true, "reply_max_chars": 250 }
+  },
+  {
+    "name": "movie watched last night, 9 out of 10",
+    "messages": ["we watched Past Lives last night, beautiful, 9 out of 10"],
+    "expect": {
+      "calls": ["create_entry"],
+      "sql": [
+        { "q": "SELECT c.slug FROM entries e JOIN collections c ON c.id = e.collection_id WHERE e.title_key LIKE '%past lives%'", "eq": "movies" },
+        { "q": "SELECT rating FROM entries WHERE title_key LIKE '%past lives%'", "eq": 4.5 },
+        { "q": "SELECT last_logged_on FROM entries WHERE title_key LIKE '%past lives%'", "eq": "{{today-1}}" }
+      ]
+    }
+  },
+  {
+    "name": "rewatch is a log on the existing movie",
+    "messages": ["rewatched dune part two tonight, still a 5"],
+    "expect": {
+      "calls": ["add_log"],
+      "not_calls": ["create_entry"],
+      "sql": [
+        { "q": "SELECT log_count FROM entries WHERE title_key LIKE 'dune part two'", "eq": 2 },
+        { "q": "SELECT rating FROM entries WHERE title_key LIKE 'dune part two'", "eq": 5 }
+      ]
+    }
+  },
+  {
+    "name": "finished a book",
+    "messages": ["I finished Project Hail Mary, loved it, 5 stars"],
+    "expect": {
+      "not_calls": ["create_entry"],
+      "sql": [
+        { "q": "SELECT json_extract(fields, '$.status') FROM entries WHERE title_key = 'project hail mary'", "eq": "finished" },
+        { "q": "SELECT rating FROM entries WHERE title_key = 'project hail mary'", "eq": 5 }
+      ]
+    }
+  },
+  {
+    "name": "gift idea goes into a private collection",
+    "messages": ["gift idea for Sam: the Le Creuset dutch oven in sage, around 350 dollars"],
+    "expect": {
+      "calls": ["create_collection", "create_entry"],
+      "sql": [
+        { "q": "SELECT count(*) FROM entries e JOIN collections c ON c.id = e.collection_id WHERE c.visibility = 'private' AND e.title_key LIKE '%dutch oven%'", "eq": 1 }
+      ],
+      "raw_text_contains": ["dutch oven"]
+    }
+  },
+  {
+    "name": "a personal document goes into a sensitive collection both can see",
+    "messages": ["save my passport: number 512998431, expires March 3 2031"],
+    "expect": {
+      "calls": ["create_collection", "create_entry"],
+      "sql": [
+        { "q": "SELECT count(*) FROM entries e JOIN collections c ON c.id = e.collection_id WHERE c.sensitive = 1 AND c.visibility = 'shared' AND e.title_key LIKE '%passport%'", "eq": 1 }
+      ],
+      "raw_text_contains": ["passport"]
+    }
+  },
+  {
+    "name": "dinner and a movie in one message",
+    "messages": ["dinner at Taco Star then we watched Anatomy of a Fall, tacos were a 3, movie was a 4"],
+    "expect": {
+      "calls": ["add_log"],
+      "sql": [
+        { "q": "SELECT log_count FROM entries WHERE title_key = 'taco star'", "eq": 2 },
+        { "q": "SELECT count(*) FROM entries WHERE title_key LIKE '%anatomy of a fall%'", "eq": 1 },
+        { "q": "SELECT rating FROM entries WHERE title_key LIKE '%anatomy of a fall%'", "eq": 4 }
+      ]
+    }
+  },
+  {
+    "name": "7 out of 10, last friday",
+    "messages": ["Lemongrass again last friday, honestly better, 7 out of 10"],
+    "expect": {
+      "calls": ["add_log"],
+      "not_calls": ["create_entry"],
+      "sql": [
+        { "q": "SELECT occurred_on FROM entry_logs l JOIN entries e ON e.id = l.entry_id WHERE e.title_key = 'lemongrass' ORDER BY l.id DESC LIMIT 1", "eq": "{{last:fri}}" },
+        { "q": "SELECT l.rating FROM entry_logs l JOIN entries e ON e.id = l.entry_id WHERE e.title_key = 'lemongrass' ORDER BY l.id DESC LIMIT 1", "eq": 3.5 }
+      ]
+    }
+  },
+  {
+    "name": "voice transcription misspelling of an existing name",
+    "messages": ["we went to fo fifty four again, five stars"],
+    "expect": {
+      "not_calls": ["create_entry"],
+      "sql": [
+        { "q": "SELECT log_count FROM entries WHERE title_key = 'pho 54'", "eq": 2 },
+        { "q": "SELECT count(*) FROM entries WHERE deleted_at IS NULL", "eq": 8 }
+      ]
+    }
+  },
+  {
+    "name": "a new kind of thing gets a broad collection",
+    "messages": ["we hiked Mount Cutler today, about 2 miles, pretty easy, great views"],
+    "expect": {
+      "calls": ["create_collection", "create_entry"],
+      "sql": [
+        { "q": "SELECT count(*) FROM collections", "eq": 4 },
+        { "q": "SELECT count(*) FROM entries e JOIN collections c ON c.id = e.collection_id WHERE e.title_key LIKE '%cutler%' AND c.slug NOT IN ('restaurants', 'movies', 'books')", "eq": 1 },
+        { "q": "SELECT CASE WHEN lower(name) LIKE '%cutler%' THEN 'too specific' ELSE 'broad' END FROM collections ORDER BY id DESC LIMIT 1", "eq": "broad" }
+      ]
+    }
+  },
+  {
+    "name": "words like 'loved it' don't become a number",
+    "messages": ["we had brunch at Snooze on Colfax this morning, loved it"],
+    "expect": {
+      "calls": ["create_entry"],
+      "sql": [{ "q": "SELECT rating FROM entries WHERE title_key LIKE '%snooze%'", "eq": null }]
+    }
+  },
+  {
+    "name": "Sam's visit is attributed to her",
+    "user": "sam",
+    "messages": ["I finally tried Siam Garden tonight, 5 stars, the khao soi was perfect"],
+    "expect": {
+      "calls": ["add_log"],
+      "not_calls": ["create_entry"],
+      "sql": [
+        { "q": "SELECT json_extract(fields, '$.status') FROM entries WHERE title_key = 'siam garden'", "eq": "been" },
+        { "q": "SELECT u.display_name FROM entry_logs l JOIN users u ON u.id = l.created_by JOIN entries e ON e.id = l.entry_id WHERE e.title_key = 'siam garden'", "eq": "Sam" }
+      ]
+    }
+  },
+  {
+    "name": "a really different place despite a similar name",
+    "messages": ["we tried Pho 54 Express on Main Street, it's a different place from the regular Pho 54, 3.5 stars"],
+    "expect": {
+      "sql": [
+        { "q": "SELECT count(*) FROM entries WHERE title_key LIKE 'pho 54%' AND deleted_at IS NULL", "eq": 2 },
+        { "q": "SELECT log_count FROM entries WHERE title_key = 'pho 54'", "eq": 1 }
+      ]
+    }
+  },
+  {
+    "name": "lunch yesterday at a known place",
+    "messages": ["we had lunch at Tacos El Gordo yesterday"],
+    "expect": {
+      "calls": ["add_log"],
+      "not_calls": ["create_entry"],
+      "sql": [{ "q": "SELECT last_logged_on FROM entries WHERE title_key = 'tacos el gordo'", "eq": "{{today-1}}" }]
+    }
+  }
+]

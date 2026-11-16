@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '26.13'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Tests (with structured logs captured)
+        shell: bash
+        run: TEST_LOGS=1 npm test 2>&1 | tee test-output.txt
+      - name: Logs never contain tokens or what people said
+        run: |
+          if grep '^{"t":' test-output.txt | grep -E 'tma_(at|rt|pat|ac)_|brisket|spring rolls|secret grinder'; then
+            echo "A log line contains a token or raw text" >&2
+            exit 1
+          fi
+      - run: npm audit --omit=dev --audit-level=high
+      - name: Eval fixtures load and seed
+        run: node scripts/eval.ts --check

@@ -1,0 +1,50 @@
+name: Restore drill
+
+# Monthly: restore the latest Litestream replica and the latest nightly snapshot into a temp directory,
+# check integrity and row counts, and fail loudly if anything is off. Uses the read-only R2 token.
+on:
+  schedule:
+    - cron: '17 15 3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_READONLY_ACCESS_KEY_ID: ${{ secrets.R2_READONLY_ACCESS_KEY_ID }}
+      R2_READONLY_SECRET_ACCESS_KEY: ${{ secrets.R2_READONLY_SECRET_ACCESS_KEY }}
+    steps:
+      # Without the read-only R2 key (backups not switched on, or a fork) there is nothing to rehearse.
+      - id: ready
+        run: if [ -n "$R2_BUCKET" ] && [ -n "$R2_READONLY_ACCESS_KEY_ID" ]; then echo "yes=1" >> "$GITHUB_OUTPUT"; else echo "No R2 secrets, so there is no backup to check."; fi
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        if: steps.ready.outputs.yes == '1'
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        if: steps.ready.outputs.yes == '1'
+        with:
+          node-version: '26.13'
+          cache: npm
+      - run: npm ci
+        if: steps.ready.outputs.yes == '1'
+      - name: Restore the Litestream replica
+        if: steps.ready.outputs.yes == '1'
+        run: |
+          mkdir -p drill
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -v "$PWD/litestream.yml:/etc/litestream.yml:ro" -v "$PWD/drill:/drill" \
+            -e R2_BUCKET -e R2_ACCOUNT_ID \
+            -e LITESTREAM_ACCESS_KEY_ID="$R2_READONLY_ACCESS_KEY_ID" \
+            -e LITESTREAM_SECRET_ACCESS_KEY="$R2_READONLY_SECRET_ACCESS_KEY" \
+            litestream/litestream:0.5.17 restore -config /etc/litestream.yml -o /drill/replica.db /data/tracker.db
+      - name: Download the latest nightly snapshot
+        if: steps.ready.outputs.yes == '1'
+        run: node scripts/db-pull.ts --out drill/snapshot.db
+      - name: Check both copies
+        if: steps.ready.outputs.yes == '1'
+        run: node scripts/drill-check.ts drill/replica.db drill/snapshot.db

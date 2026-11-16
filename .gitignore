@@ -1,0 +1,13 @@
+node_modules/
+data/
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
+!.env.example
+coverage/
+eval-results/
+magpie-login.txt
+magpie-photo-key.txt
+.claude/worktrees/

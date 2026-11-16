@@ -1,0 +1,37 @@
+[
+  {
+    "name": "undo that",
+    "messages": ["we went to Taco Star again tonight, 3 stars", "undo that"],
+    "expect": {
+      "calls": ["add_log", "undo_last_change"],
+      "sql": [{ "q": "SELECT log_count FROM entries WHERE title_key = 'taco star'", "eq": 1 }]
+    }
+  },
+  {
+    "name": "actually it was 3 stars",
+    "messages": ["we went to pho 54 tonight, 5 stars", "actually it was 3 stars"],
+    "expect": {
+      "not_calls": ["create_entry"],
+      "sql": [
+        { "q": "SELECT rating FROM entries WHERE title_key = 'pho 54'", "eq": 3 },
+        { "q": "SELECT log_count FROM entries WHERE title_key = 'pho 54'", "eq": 2 }
+      ]
+    }
+  },
+  {
+    "name": "delete something saved by mistake",
+    "messages": ["delete Lemongrass from the tracker, we never actually went there"],
+    "expect": {
+      "calls": ["delete_item"],
+      "sql": [{ "q": "SELECT deleted_at IS NOT NULL FROM entries WHERE title_key = 'lemongrass'", "eq": 1 }]
+    }
+  },
+  {
+    "name": "correct a field",
+    "messages": ["Thai Basil is actually in Cherry Creek, not where I said"],
+    "expect": {
+      "calls": ["update_entry"],
+      "sql": [{ "q": "SELECT json_extract(fields, '$.neighborhood') FROM entries WHERE title_key = 'thai basil'", "eq": "Cherry Creek" }]
+    }
+  }
+]
