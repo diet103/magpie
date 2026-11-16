@@ -55,6 +55,13 @@ minutes. Never name a header your proxy does not set itself.
    docker compose logs -f magpie                  # wait for "listening"
    ```
 
+   If port 8080 is taken on your machine, pick another: `MAGPIE_PORT=8090 docker compose up -d --build`.
+   It refuses to start unless `PUBLIC_URL` begins with `https://`.
+
+   ```sh
+   docker compose ps                              # says "healthy" after half a minute
+   ```
+
 3. Remove `BOOTSTRAP_EMPTY_DB=1` from `.env` and run `docker compose up -d` again. From then on a missing
    or empty database makes it refuse to start instead of quietly starting empty.
 

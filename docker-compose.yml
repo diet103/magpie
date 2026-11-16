@@ -11,7 +11,8 @@ services:
       PORT: "8080"
     ports:
       # Only this machine can reach it directly. Put your HTTPS proxy or tunnel in front of port 8080.
-      - "127.0.0.1:8080:8080"
+      # If 8080 is taken, start it with another one: MAGPIE_PORT=8090 docker compose up -d
+      - "127.0.0.1:${MAGPIE_PORT:-8080}:8080"
     volumes:
       - magpie_data:/data
     healthcheck:

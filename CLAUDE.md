@@ -161,7 +161,10 @@ Unit tests do not catch layout or touch problems. Two things have worked:
 - `setup.sh` made a fresh install on Fly.io from a clean copy on Linux (2026-11-15: three checks ok, then the
   connector smoke test passed 15 of 15 for two people). It has not been run on macOS. `setup.ps1` with the same
   changes has only been through its dry run; the add-on steps of both scripts were tried against stand-ins.
-- Docker (`docker-compose.yml`, `docs/docker.md`) is written from the Dockerfile and has not been run.
+- Docker (`docker-compose.yml`, `docs/docker.md`) was run once from a clean copy on Docker Desktop (2026-11-15):
+  build, first start, sign-in, saving an entry, a restart without `BOOTSTRAP_EMPTY_DB` with the data kept, the
+  container's health check and an admin command. It has not been run behind a real proxy or tunnel, so Claude
+  connecting to a Docker copy is unproven.
 - Photo previews, Remove with Undo, and the zip download on real phones. They were checked in desktop
   Chrome at phone size, including an update from the previous version with photos already kept by its worker.
 - Filling a field (`src/assistant/fill.ts`) against the real Anthropic API; it is tested with a scripted reply.
