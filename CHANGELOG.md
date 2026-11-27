@@ -4,6 +4,13 @@ What changed for someone running their own copy. To update: get the new version,
 (`setup.cmd` on Windows, `./setup.sh` on macOS and Linux). Updates only move forward: once a release has
 changed the database, do not go back to an older one.
 
+## 1.0.2
+
+- An older version of Magpie now refuses to start on a database that a newer version has used, and says so
+  in one line of its log, instead of running on data it does not understand. Nothing in the database is
+  changed by the refused start. Deploy the newer code again and it comes back.
+- The admin commands (`src/cli.ts`) say in one line why a data folder cannot be used, not with a stack trace.
+
 ## 1.0.1
 
 For people setting up a new copy. Nothing changes in the database.

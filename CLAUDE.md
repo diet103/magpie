@@ -124,6 +124,12 @@ Needs Node 26.13 or newer. Node runs the TypeScript directly: there is no build 
   page that opens the chat already asking (`POST /ask/find`) is a checked form post. `refusal()` in
   `src/assistant/chat.ts` is where a tool call is turned away (after a web page, or with a photo or PDF in the message, or outside the one entry a
   narrow job is about).
+- `migrate()` in `src/db/sqlite.ts` refuses a database whose `user_version` is past the newest migration file,
+  before writing anything: older code must not run on a newer database. The server logs "cannot open
+  tracker.db" (or auth.db) with the reason and exits, and `src/cli.ts` prints the reason. So a release that adds
+  a migration cannot be undone by deploying the one before it: fix forward and keep the migration file, or
+  restore the copy taken before the deploy. `test/newer-database.test.ts` starts the real server on such a
+  data folder. It only protects against going back to code that has the check (1.0.2 and later).
 - A setting left blank counts as not set (`loadConfig`), so a `.env` copied from `.env.example` starts as it
   is. `test/config.test.ts` loads the example file: keep it loading when a setting is added.
 - Until a person can see a collection, Home shows the first-run steps (`gettingStarted` in `views.ts`) with

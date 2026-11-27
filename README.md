@@ -130,7 +130,9 @@ To rename it, change `APP_NAME` in `src/brand.ts` (and the two names in `src/web
 Get the new version of this folder (`git pull`, or download it again over the old one, keeping your
 `fly.toml`), then run setup again: `.\setup.cmd` or `./setup.sh`. It deploys the new code and keeps your
 data, passwords and settings. Updates only move forward: once a newer version has run, do not go back to an
-older one. `CHANGELOG.md` says what changed.
+older one. `CHANGELOG.md` says what changed. From 1.0.2 an older version notices: it refuses to start on a
+database that a newer one has used, and says so in its log. The app then stays down, with your data untouched,
+until the newer code is deployed again.
 
 Your `fly.toml` is how setup knows which app is yours: it holds the app's name and your time zone. If you
 start from a fresh copy without it, setup would create a second app. Run it once as

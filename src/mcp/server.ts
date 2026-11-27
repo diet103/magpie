@@ -7,7 +7,7 @@ import { getUser } from '../domain/users.ts';
 import { errorFields, log } from '../log.ts';
 import { registerTools } from './tools.ts';
 
-export const SERVER_VERSION = '1.0.1';
+export const SERVER_VERSION = '1.0.2';
 
 /** Server instructions (plan section 4.2). Household names come from the allowlist. */
 export function instructions(names: string[]): string {

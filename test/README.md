@@ -34,6 +34,9 @@ at a time keeps those steady on a small CI machine.
 - `guardrails.test.ts` covers what must not happen behind someone's back: what Ask may do after reading
   outside text, and what one person may undo or make private over the other's changes.
 - `setup-scripts.test.ts` keeps `setup.ps1` and `setup.sh` doing the same thing.
+- `newer-database.test.ts` starts the real server and an admin command on a data folder that newer code has
+  used, and expects each to stop with the reason. Its server test takes twenty seconds to fail if the refusal
+  is ever removed, because the server then simply starts.
 - A bug fix comes with a test that fails without it.
 
 ## What is not tested here

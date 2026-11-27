@@ -1,7 +1,8 @@
 import { DatabaseSync } from 'node:sqlite';
 import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { APP_NAME } from '../brand.ts';
 import { openVault } from './vault.ts';
 
 export type DB = DatabaseSync;
@@ -52,12 +53,25 @@ export function tx<T>(db: DB, fn: () => T): T {
   return result;
 }
 
-/** Applies NNN_name.sql files newer than PRAGMA user_version, each in its own transaction. */
-export function migrate(db: DB, dir: string) {
+/**
+ * Applies NNN_name.sql files newer than PRAGMA user_version, each in its own transaction.
+ *
+ * A database that is already past the newest file here was last used by newer code, and a later step can change
+ * what the earlier tables mean (009 moved sensitive text into a sealed column, which older code reads as empty).
+ * Older code must not run on it, so that is refused before anything is written. `name` is the file's name, for
+ * the message.
+ */
+export function migrate(db: DB, dir: string, name = 'This database') {
   const current = Number((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version);
   const files = readdirSync(dir)
     .filter((f) => /^\d{3}_.+\.sql$/.test(f))
     .sort();
+  const newest = files.length ? Number(files[files.length - 1].slice(0, 3)) : 0;
+  if (current > newest) {
+    throw new Error(
+      `${name} was last used by a newer version of ${APP_NAME}: it is at step ${current}, and this code only knows up to step ${newest}. Get the newer code. An older version must not run on this database.`,
+    );
+  }
   for (const f of files) {
     const n = Number(f.slice(0, 3));
     if (n <= current) continue;
@@ -94,8 +108,8 @@ export function openTrackerDb(path: string, allowCreate: boolean, filesKey?: Buf
       );
     }
   }
-  migrate(db, MIGRATIONS.tracker);
   try {
+    migrate(db, MIGRATIONS.tracker, basename(path));
     openVault(db, filesKey);
   } catch (err) {
     db.close();
@@ -106,7 +120,12 @@ export function openTrackerDb(path: string, allowCreate: boolean, filesKey?: Buf
 
 export function openAuthDb(path: string): DB {
   const db = openDb(path);
-  migrate(db, MIGRATIONS.auth);
+  try {
+    migrate(db, MIGRATIONS.auth, basename(path));
+  } catch (err) {
+    db.close();
+    throw err;
+  }
   return db;
 }
 

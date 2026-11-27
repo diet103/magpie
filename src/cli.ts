@@ -34,14 +34,21 @@ const { positionals, values } = parseArgs({
   },
 });
 
-const cfg = loadConfig();
-const db = openTrackerDb(cfg.trackerDbPath, false, cfg.filesKey);
-syncUsers(db, cfg.allowedUsers);
-const store = new AuthStore(openAuthDb(cfg.authDbPath));
-
 function fail(msg: string): never {
   console.error(msg);
   process.exit(1);
+}
+
+const cfg = loadConfig();
+let db: DB;
+let store: AuthStore;
+try {
+  db = openTrackerDb(cfg.trackerDbPath, false, cfg.filesKey);
+  syncUsers(db, cfg.allowedUsers);
+  store = new AuthStore(openAuthDb(cfg.authDbPath));
+} catch (err) {
+  // A data folder that cannot be used (missing, empty, the wrong key, or last used by newer code): say why, plainly.
+  fail(err instanceof Error ? err.message : String(err));
 }
 
 function userOf(email: string | undefined) {

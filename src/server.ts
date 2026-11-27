@@ -24,7 +24,13 @@ try {
   log.error('cannot open tracker.db', errorFields(err));
   process.exit(1);
 }
-const authDb = openAuthDb(cfg.authDbPath);
+let authDb: DB;
+try {
+  authDb = openAuthDb(cfg.authDbPath);
+} catch (err) {
+  log.error('cannot open auth.db', errorFields(err));
+  process.exit(1);
+}
 syncUsers(db, cfg.allowedUsers);
 sweepExports();
 // entrypoint.sh starts Litestream on exactly these four settings. When it has, the write-ahead log is

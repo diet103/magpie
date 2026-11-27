@@ -81,7 +81,8 @@ as Magpie and point it at `magpie:8080` instead.
   `files/` (photos, encrypted). Back the volume up, or set the four R2 values from `.env.example` for
   continuous off-site backups. A backup is only useful together with `FILES_KEY`.
 - **Updating:** get the new version, then `docker compose up -d --build`. Updates only move forward; do
-  not go back to an older version once a newer one has run.
+  not go back to an older version once a newer one has run. An older version refuses to start on a
+  database that a newer one has used; `docker compose logs magpie` says so.
 - **Admin commands:** `docker compose exec -u node magpie node src/cli.ts users` (see the top of
   `src/cli.ts` for the list).
 - **The Ask box** is off until you add `ANTHROPIC_API_KEY` to `.env` and run `docker compose up -d` again.
