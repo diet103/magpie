@@ -4,6 +4,10 @@ The setup scripts put Magpie on Fly.io, which is the easy route. This page is fo
 run it on their own machine or home server. You need Docker with Compose, and a way to give it a public
 `https://` address.
 
+This route has been run from a clean copy (build, first start, sign-in, saving an entry, a restart with the
+data kept), but not yet behind a real proxy or tunnel, so Claude connecting to a Docker copy is unproven. If
+you try it, an issue saying what happened, working or not, is welcome.
+
 ## Why it needs a public address
 
 Claude reaches your Magpie from Anthropic's servers, not from your phone or laptop, so
@@ -12,22 +16,13 @@ gives it a real `https://` name: a reverse proxy with a certificate (Caddy, Trae
 (Cloudflare Tunnel, Tailscale Funnel). Point it at port 8080 on the machine running Docker. The web app
 itself also expects https, because its sign-in cookies are marked secure.
 
-## Tell it which header your proxy uses
-
-Sign-in is locked for ten minutes after ten wrong passwords from one address, so Magpie needs the visitor's
-real address, and only your proxy knows it. Add one line to `.env`:
-
-```sh
-CLIENT_IP_HEADER=X-Forwarded-For     # nginx, Caddy, Traefik
-CLIENT_IP_HEADER=CF-Connecting-IP    # Cloudflare Tunnel
-```
-
-Without it every visitor looks like your proxy, and a stranger's wrong guesses can lock you out for those ten
-minutes. Never name a header your proxy does not set itself.
+The compose file publishes that port on `127.0.0.1` only, which suits a proxy or tunnel running on the same
+machine. A proxy that runs in its own container cannot reach that address: put it on the same Docker network
+as Magpie and point it at `magpie:8080` instead.
 
 ## Set it up
 
-1. Copy `.env.example` to `.env` and fill it in:
+1. Copy `.env.example` to `.env` and fill it in. A line you leave blank counts as not set.
 
    ```sh
    PUBLIC_URL=https://magpie.example.com          # the public address, no trailing slash
@@ -48,7 +43,19 @@ minutes. Never name a header your proxy does not set itself.
    A password needs 16 or more characters and no spaces or commas. Put the passwords and `FILES_KEY` in a
    password manager now. Without `FILES_KEY`, photos and sensitive entries cannot be read again.
 
-2. Start it:
+2. Tell it which header your proxy uses. Sign-in is locked for ten minutes after ten wrong passwords from
+   one address, so Magpie needs the visitor's real address, and only your proxy knows it. Add one of these
+   lines to `.env`:
+
+   ```sh
+   CLIENT_IP_HEADER=X-Forwarded-For     # nginx, Caddy, Traefik
+   CLIENT_IP_HEADER=CF-Connecting-IP    # Cloudflare Tunnel
+   ```
+
+   Without it every visitor looks like your proxy, and a stranger's wrong guesses can lock you out for those
+   ten minutes. Never name a header your proxy does not set itself.
+
+3. Start it:
 
    ```sh
    docker compose up -d --build
@@ -62,11 +69,11 @@ minutes. Never name a header your proxy does not set itself.
    docker compose ps                              # says "healthy" after half a minute
    ```
 
-3. Remove `BOOTSTRAP_EMPTY_DB=1` from `.env` and run `docker compose up -d` again. From then on a missing
+4. Remove `BOOTSTRAP_EMPTY_DB=1` from `.env` and run `docker compose up -d` again. From then on a missing
    or empty database makes it refuse to start instead of quietly starting empty.
 
-4. Open your public address, sign in, then connect Claude: claude.ai > Customize > Connectors > Add custom
-   connector, URL `https://magpie.example.com/mcp`.
+5. Open your public address and sign in. Home shows how to connect Claude: claude.ai > Customize >
+   Connectors > Add custom connector, URL `https://magpie.example.com/mcp`.
 
 ## Looking after it
 
@@ -77,5 +84,7 @@ minutes. Never name a header your proxy does not set itself.
   not go back to an older version once a newer one has run.
 - **Admin commands:** `docker compose exec -u node magpie node src/cli.ts users` (see the top of
   `src/cli.ts` for the list).
-- **The Ask box** is off until you add `ANTHROPIC_API_KEY` to `.env`. Everything through Claude's connector
-  works without it.
+- **The Ask box** is off until you add `ANTHROPIC_API_KEY` to `.env` and run `docker compose up -d` again.
+  Everything through Claude's connector works without it.
+- **Removing it:** `docker compose down -v` deletes the container and the `magpie_data` volume with
+  everything in it.

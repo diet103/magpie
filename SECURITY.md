@@ -38,6 +38,15 @@ backups on.
 - Lose `FILES_KEY` and the photos and sensitive entries cannot be recovered. Changing the key is not built.
 - Do not store passwords, card numbers or bank logins. Use a password manager for those.
 
+## How it has been checked
+
+It has not had a professional security audit. It was written with Claude Code, then reviewed twice in
+November 2026 by separate AI sessions that had not seen the code before, each reading one area cold: sign-in
+and the connector's OAuth; privacy, Activity and Undo; the web app and the phone's worker; backups, start-up
+and the Ask box; and everything that can be reached without signing in. What they found was fixed, and each
+fix has a test. Code added after those reviews has tests but has not been reviewed. If you can read code,
+`src/auth/`, `src/domain/privacy.ts` and `src/db/vault.ts` are where a second pair of eyes is worth most.
+
 ## Known limits
 
 - **The Ask box reads text that is not yours.** A web page, a photo, a PDF, or a note the other person saved

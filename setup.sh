@@ -672,6 +672,11 @@ if ! has_secret R2_BUCKET; then
   printf '\n'
   note 'Backups: Fly.io keeps a daily snapshot of the disk for 14 days. For continuous off-site backups, run ./setup.sh --backups when you have ten minutes.'
 fi
+if [ "$FIRST_CONFIG" = 1 ]; then
+  printf '\n'
+  note 'Fly.io card: if you have not added one yet, do it now at https://fly.io/dashboard/personal/billing'
+  note "Without a card a new account has \$1 of credit for 7 days, and Fly.io has stopped such servers five minutes after every start, which makes pages slow."
+fi
 if [ "$MADE_PHOTO_KEY" = 1 ] || [ -f "$PHOTO_KEY_FILE" ]; then
   printf '\n'
   note "Important: save $PHOTO_KEY_FILE in your password manager now, then delete the file."

@@ -124,6 +124,14 @@ Needs Node 26.13 or newer. Node runs the TypeScript directly: there is no build 
   page that opens the chat already asking (`POST /ask/find`) is a checked form post. `refusal()` in
   `src/assistant/chat.ts` is where a tool call is turned away (after a web page, or with a photo or PDF in the message, or outside the one entry a
   narrow job is about).
+- A setting left blank counts as not set (`loadConfig`), so a `.env` copied from `.env.example` starts as it
+  is. `test/config.test.ts` loads the example file: keep it loading when a setting is added.
+- Until a person can see a collection, Home shows the first-run steps (`gettingStarted` in `views.ts`) with
+  the address Claude's connector needs. Settings always shows that address, because the second person never
+  sees what setup printed.
+- Text about the host's prices or plans (the README's Fly.io lines, the setup scripts' closing note) carries
+  the month it was true. Fly.io changed its free plan between two readings in November 2026: read their
+  page again before repeating a figure.
 - User-facing text is plain and short, and avoids em dashes.
 - A bug fix comes with a test that fails without it.
 
@@ -163,12 +171,16 @@ Unit tests do not catch layout or touch problems. Two things have worked:
   changes has only been through its dry run; the add-on steps of both scripts were tried against stand-ins.
 - Docker (`docker-compose.yml`, `docs/docker.md`) was run once from a clean copy on Docker Desktop (2026-11-15):
   build, first start, sign-in, saving an entry, a restart without `BOOTSTRAP_EMPTY_DB` with the data kept, the
-  container's health check and an admin command. It has not been run behind a real proxy or tunnel, so Claude
-  connecting to a Docker copy is unproven.
+  container's health check and an admin command. On 2026-11-27 it was run again with a `.env` copied from
+  `.env.example` as the guide says (build, healthy, the sign-in page, a restart without `BOOTSTRAP_EMPTY_DB`).
+  It has not been run behind a real proxy or tunnel, so Claude connecting to a Docker copy is unproven.
+- The first-run steps on an empty Home and the connector address in Settings on a real phone. They were
+  checked in desktop Chrome at phone size, light and dark.
 - Photo previews, Remove with Undo, and the zip download on real phones. They were checked in desktop
   Chrome at phone size, including an update from the previous version with photos already kept by its worker.
 - Filling a field (`src/assistant/fill.ts`) against the real Anthropic API; it is tested with a scripted reply.
 - Checklists on real phones. Ticking in place, the other phone's changes arriving, and ticking with no
   signal (including reopening the list offline) were checked in desktop Chrome at phone size.
-- Two independent reviews ran in November 2026 and their findings are fixed. Code added since has tests but
-  has not been reviewed.
+- Two independent reviews ran in November 2026 and their findings are fixed. The reviewers were separate AI
+  sessions given the code cold, not people, and the README and `SECURITY.md` say so: keep it that way, and
+  never call it an audit. Code added since has tests but has not been reviewed.

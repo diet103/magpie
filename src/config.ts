@@ -54,7 +54,10 @@ export interface AllowedUser {
 
 export type Config = ReturnType<typeof loadConfig>;
 
-export function loadConfig(env: Record<string, string | undefined> = process.env) {
+export function loadConfig(given: Record<string, string | undefined> = process.env) {
+  // A setting left blank counts as not set. `.env.example` lists optional settings as `NAME=`, and both
+  // `node --env-file` and Docker's `env_file` hand those over as empty text.
+  const env = Object.fromEntries(Object.entries(given).filter(([, value]) => value !== undefined && value.trim() !== ''));
   const e = Env.parse(env);
   const publicUrl = e.PUBLIC_URL.replace(/\/+$/, '');
   const isTest = e.NODE_ENV === 'test';

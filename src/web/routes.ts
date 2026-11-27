@@ -159,7 +159,7 @@ export function webRoutes(deps: AppDeps): Hono<AppEnv> {
     return page(
       c,
       'Home',
-      v.homePage({ overview, pinnedCollections, lastActive, left, needsDetails, pinned: listPinned(ctx), upcoming, hiddenCount, recent, csrf: csrfOf(c), tz: cfg.tz, flash: takeFlash(c) }),
+      v.homePage({ overview, pinnedCollections, lastActive, left, needsDetails, pinned: listPinned(ctx), upcoming, hiddenCount, recent, mcpUrl: cfg.mcpUrl, askOn: Boolean(cfg.assistant.apiKey), csrf: csrfOf(c), tz: cfg.tz, flash: takeFlash(c) }),
       'home',
     );
   });
@@ -1043,6 +1043,7 @@ export function webRoutes(deps: AppDeps): Hono<AppEnv> {
       'Settings',
       v.settingsPage({
         user,
+        mcpUrl: cfg.mcpUrl,
         grants: deps.store.listGrants(user.id).map((g) => ({ ...g, client: clientDisplayName(g.client_id) })),
         pats: deps.store.listPats(user.id),
         sessions: deps.store.listSessions(user.id).map((s) => ({ ...s, current: s.id_hash === currentHash })),

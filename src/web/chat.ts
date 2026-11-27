@@ -92,7 +92,12 @@ export function askPage(o: { messages: ChatView[]; enabled: boolean; photos: boo
     return html`<section class="card narrow">
       <h1>Ask</h1>
       <p>This is a chat that saves and finds things right here, without opening Claude. It runs on your own Anthropic API key, and it isn't switched on yet.</p>
-      <p>To switch it on, open the project folder on your computer and double-click <code>turn-on-ask.cmd</code>. It asks for the key once.</p>
+      <p>Whoever set ${APP_NAME} up can switch it on from the project folder on their computer. It asks for the key once.</p>
+      <ul>
+        <li>macOS or Linux: run <code>./setup.sh --assistant</code></li>
+        <li>Windows: double-click <code>turn-on-ask.cmd</code></li>
+        <li>Docker: add <code>ANTHROPIC_API_KEY</code> to <code>.env</code> and start it again</li>
+      </ul>
     </section>`;
   }
   const items: Html[] = [];

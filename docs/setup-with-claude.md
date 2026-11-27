@@ -27,7 +27,13 @@ Check you are in the folder that holds `fly.toml` and `Dockerfile`. Node and Doc
 
 Tell the person, before anything else:
 
-- Magpie runs on Fly.io, in their own account. Fly.io needs a card on file. It costs about $4 a month.
+- Magpie runs on Fly.io, in their own account, where it uses about $4 a month. As of November 2026 a new
+  Fly.io account's Free plan includes $5 of usage a month once a card is on file, so it may cost them
+  nothing; https://fly.io/docs/about/free-trial/ has the current terms. Do not promise that it is free.
+- Fly.io needs a card on file, and it should be added before the install, not after. Without one a new
+  account has $1 of credit for 7 days, and Fly.io has stopped such servers five minutes after every start,
+  which makes pages slow and cuts Ask replies short. Ask whether the card is there; they add it themselves
+  at https://fly.io/dashboard/personal/billing.
 - The script installs Fly.io's command-line tool if it is missing, creates one small app with a 1 GB disk, and
   deploys it. It takes about five minutes.
 

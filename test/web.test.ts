@@ -105,6 +105,66 @@ describe('web app pages', () => {
     assert.doesNotMatch(minRating, /Pho 54 Express/);
   });
 
+  test("a new household's Home says how to connect Claude and what to say, until its first collection exists", async () => {
+    const fresh = await startTestApp();
+    const withAsk = await startTestApp({ ANTHROPIC_API_KEY: 'sk-ant-test-key' });
+    try {
+      const j = await signInWeb(fresh, ALEX);
+      const get = async (path: string) => (await fresh.request(path, { jar: j })).text();
+      const address = `${PUBLIC}/mcp`;
+
+      const empty = await get('/');
+      assert.match(empty, /<h2>Getting started<\/h2>/);
+      assert.ok(empty.includes(`<code>${address}</code>`), 'the address Claude needs is on the page');
+      assert.ok(empty.includes(`data-copy="${address}"`), 'with a copy button');
+      assert.match(empty, /Add custom connector/);
+      assert.match(empty, /we went to that new pho place tonight/);
+      assert.match(empty, /Add to Home screen/);
+      assert.doesNotMatch(empty, /You can also type it in/, 'Ask is not offered while it is switched off');
+      assert.match(await (await withAsk.request('/', { jar: await signInWeb(withAsk, ALEX) })).text(), /You can also type it in <a href="\/ask">Ask<\/a>/);
+
+      const me = findUserByEmail(fresh.deps.db, 'alex@example.com')!;
+      const ctx: Ctx = { db: fresh.deps.db, tz: fresh.deps.config.tz, actor: { userId: me.id, name: 'Alex', via: 'mcp', client: 'test' } };
+      assert.ok(createCollection(ctx, { name: 'Hikes', description: 'Trails.', fields: [] }).ok);
+      const later = await get('/');
+      assert.match(later, /Hikes/);
+      assert.doesNotMatch(later, /Getting started/);
+
+      // The second person never saw what setup printed, so the address has to be findable afterwards too.
+      const settings = await get('/settings');
+      assert.match(settings, /None yet\./);
+      assert.ok(settings.includes(`<code>${address}</code>`) && settings.includes(`data-copy="${address}"`));
+    } finally {
+      await fresh.close();
+      await withAsk.close();
+    }
+  });
+
+  // Setup asks for one or two people, but the list of who may sign in can be longer.
+  test('a third person can be let in by hand: they see what is shared and nothing private', async () => {
+    const three = await startTestApp({ ALLOWED_USERS: 'alex@example.com=Alex,sam@example.com=Sam,kim@example.com=Kim' });
+    try {
+      const ctxOf3 = (email: string, name: string): Ctx => {
+        const u = findUserByEmail(three.deps.db, email)!;
+        return { db: three.deps.db, tz: three.deps.config.tz, actor: { userId: u.id, name, via: 'mcp', client: 'test' } };
+      };
+      assert.ok(createCollection(ctxOf3('alex@example.com', 'Alex'), { name: 'Hikes', description: 'Trails.', fields: [] }).ok);
+      assert.ok(createCollection(ctxOf3('sam@example.com', 'Sam'), { name: 'Gift ideas', description: 'For the others.', fields: [], private: true }).ok);
+      assert.ok(createEntry(ctxOf3('sam@example.com', 'Sam'), { collection: 'gift-ideas', title: 'Espresso grinder', raw_text: 'secret grinder' }).ok);
+
+      const kim = await signInWeb(three, { sub: 'google-sub-kim', email: 'kim@example.com' });
+      const home = await (await three.request('/', { jar: kim })).text();
+      assert.match(home, /Hikes/);
+      assert.doesNotMatch(home, /Gift ideas/);
+      assert.doesNotMatch(await (await three.request('/search?q=grinder', { jar: kim })).text(), /Espresso/);
+      assert.match(await (await three.request('/settings', { jar: kim })).text(), /Kim · kim@example\.com/);
+      const stranger = await three.request('/auth/google/start?return_to=/', { jar: new CookieJar() });
+      assert.equal(stranger.status, 302, 'anyone may start signing in; only the three addresses get through');
+    } finally {
+      await three.close();
+    }
+  });
+
   test("the other person's private things are not found", async () => {
     await page(`/c/${ids.gifts}`, 404);
     await page(`/e/${ids.giftEntry}`, 404);

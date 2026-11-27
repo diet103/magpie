@@ -107,6 +107,8 @@ legend { padding: 0 0.25rem; font-weight: 600; }
 /* Cards and lists */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 0; padding: 1rem; }
 .card.narrow { max-width: 460px; margin: 3rem auto; }
+/* A command in a short list is kept whole: "--assistant" must not break after its dashes. */
+.card.narrow li code { white-space: nowrap; }
 .consent h1 { font-size: 1.25rem; }
 form.login { text-align: left; margin: 1.25rem auto 0.5rem; }
 form.login input { width: 100%; }
@@ -186,6 +188,14 @@ table.compare th, table.compare td { text-align: left; padding: 0.4rem; border-b
 }
 .flash.error { background: transparent; border-color: var(--danger); color: var(--danger); }
 .flash ul { margin: 0.25rem 0; padding-left: 1.25rem; width: 100%; }
+/* The first-run steps on an empty Home, and the address Claude needs (also in Settings). */
+.start { background: var(--surface); border: 1px solid var(--line); padding: 0.25rem 1rem 0.5rem; }
+.start h2 { margin-top: 0.75rem; }
+.start ol { margin: 0.5rem 0; padding-left: 1.3rem; }
+.start li { margin: 0.75rem 0; }
+.start .said { margin: 0.35rem 0; }
+.address { display: flex; align-items: center; gap: 0.25rem; margin: 0.5rem 0; padding-left: 0.6rem; background: var(--bg); border: 1px solid var(--line); }
+.address code { flex: 1; min-width: 0; padding: 0.4rem 0; word-break: break-all; user-select: all; font-size: 0.9rem; }
 /* Something shown one time only (a new token, a new link): its own lines, with a copy button beside the value. */
 .flash.once { display: block; }
 .flash.once code.token { flex: 1; min-width: 0; }

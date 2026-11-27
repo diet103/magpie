@@ -566,7 +566,12 @@ describe('the Ask box', () => {
     const off = await startTestApp();
     try {
       const j = await signInWeb(off, ALEX);
-      assert.match(await (await off.request('/ask', { jar: j })).text(), /isn't switched on yet|isn&#39;t switched on yet/);
+      const page = await (await off.request('/ask', { jar: j })).text();
+      assert.match(page, /isn't switched on yet|isn&#39;t switched on yet/);
+      // Whichever way the copy was installed: the page once named only the Windows file.
+      assert.match(page, /<code>\.\/setup\.sh --assistant<\/code>/, 'macOS and Linux');
+      assert.match(page, /<code>turn-on-ask\.cmd<\/code>/, 'Windows');
+      assert.match(page, /<code>ANTHROPIC_API_KEY<\/code> to <code>\.env<\/code>/, 'Docker');
     } finally {
       await off.close();
     }

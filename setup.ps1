@@ -586,6 +586,11 @@ try {
     Write-Host ''
     Note 'Backups: Fly.io keeps a daily snapshot of the disk for 14 days. For continuous off-site backups, run .\setup.cmd -Backups when you have ten minutes.'
   }
+  if ($firstConfig) {
+    Write-Host ''
+    Note 'Fly.io card: if you have not added one yet, do it now at https://fly.io/dashboard/personal/billing'
+    Note 'Without a card a new account has $1 of credit for 7 days, and Fly.io has stopped such servers five minutes after every start, which makes pages slow.'
+  }
   if ($script:MadePhotoKey -or (Test-Path (Join-Path $PSScriptRoot $PhotoKeyFile))) {
     Write-Host ''
     Note "Important: save $PhotoKeyFile in your password manager now, then delete the file."

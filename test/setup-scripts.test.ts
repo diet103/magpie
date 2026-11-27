@@ -85,6 +85,16 @@ describe('the two setup scripts', () => {
     for (const script of [ps1, sh]) assert.match(script, /Photos and sensitive entries cannot be recovered without the key in it\./);
   });
 
+  test('end a first install by saying why Fly.io needs a card', () => {
+    // Without one the install works but the server is stopped every few minutes, and nothing else says why.
+    for (const script of [ps1, sh]) {
+      assert.match(script, /Fly\.io card: if you have not added one yet, do it now at https:\/\/fly\.io\/dashboard\/personal\/billing/);
+      assert.match(script, /Without a card a new account has \\?\$1 of credit for 7 days, and Fly\.io has stopped such servers five minutes after every start/);
+    }
+    assert.match(ps1, /^\s*if \(\$firstConfig\) \{\r?\n\s*Write-Host ''\r?\n\s*Note 'Fly\.io card:/m, 'only after a first install');
+    assert.match(sh, /^if \[ "\$FIRST_CONFIG" = 1 \]; then\n\s*printf '\\n'\n\s*note 'Fly\.io card:/m, 'only after a first install');
+  });
+
   test('take the same options', () => {
     const options = ['email', 'name', 'partner-email', 'partner-name', 'app', 'region', 'org', 'timezone', 'google', 'google-only', 'backups', 'new-passwords', 'assistant', 'no-show', 'yes', 'dry-run'];
     const params = [...ps1.slice(ps1.indexOf('param('), ps1.indexOf("$ErrorActionPreference")).matchAll(/\$([A-Za-z]+)/g)].map((m) => m[1].toLowerCase());

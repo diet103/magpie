@@ -1,6 +1,6 @@
 {
   "name": "magpie",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A shared household memory you talk to through Claude: an MCP server, SQLite, and a small web app.",
   "type": "module",
   "private": true,

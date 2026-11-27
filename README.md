@@ -25,18 +25,47 @@ Short version: your copy is yours, the sensitive parts are encrypted, and this p
 - **Who could still read it.** Anyone who controls your hosting account, so give that a strong password and
   two-factor sign-in. And Anthropic sees what Claude reads to you, like the rest of your chats.
 - **What not to store.** Passwords, card numbers, bank logins. Use a password manager for those.
-- **Getting out.** Settings > Download everything gives you the database and every photo. Deleting the app
-  on your host deletes the rest.
+- **Getting out.** Settings > Download everything gives you the database and every photo. To remove Magpie,
+  `fly apps destroy <your app>` deletes the app, its disk and everything on it. If you switched backups on,
+  delete the R2 bucket too, and remove the connector in Claude.
+- **If this project goes quiet.** Your copy keeps running. It does not depend on any server of mine, and the
+  code is yours to keep and change (MIT).
 - **The one thing to keep.** Setup makes a key and saves it to `magpie-photo-key.txt`. Put it in a password
   manager. Without it, photos and sensitive entries cannot be recovered, by anyone.
 
-The code has had two independent security reviews and has about 250 tests, including ones that read the
-database file's own bytes to prove sensitive text is not in it. `SECURITY.md` has how to report a problem
-and the known limits; "Photos and personal documents" below has the full account.
+**How it has been checked.** It has not had a professional security audit. It was written with Claude Code,
+then reviewed twice in November 2026 by separate AI sessions that had not seen the code before, each reading
+one area cold: sign-in and the connector, privacy between the people in a household, the web app, backups,
+and the Ask box. What they found was fixed, and each fix has a test. There are about 250 tests, including
+ones that read the database file's own bytes to prove sensitive text is not in it. Code added after those
+reviews has tests but has not been reviewed. `SECURITY.md` has how to report a problem and the known limits;
+"Photos and personal documents" below has the full account.
+
+## What has been tried, and what has not
+
+- **In daily use** since November 2026 by one household of two, on Fly.io: Claude's connector, and the web
+  app with its Ask box in Chrome on Android.
+- **Setup.** `setup.sh` has made a real install from a clean copy on Linux. It has not been run on macOS, and
+  the current `setup.cmd` has only been through its dry run on Windows.
+- **Not tried yet:** an iPhone or iPad; Docker behind a real proxy or tunnel; Google sign-in on a live
+  server; a household of more than two.
+- If you try one of these, an issue saying what happened, working or not, is the most useful thing you can
+  send.
 
 ## Set it up: one command
 
-Magpie runs in your own Fly.io account. Fly.io needs a card on file, and this costs about $4 a month. Get a copy of this folder first (`git clone`, or download it), then take one of three routes:
+Magpie runs in your own Fly.io account, where it uses about $4 a month. As of November 2026 a new Fly.io account is on their Free plan, which includes $5 of usage a month once a card is on file, so it may cost you nothing; [their page](https://fly.io/docs/about/free-trial/) has the current terms.
+
+**Add the card before you start.** Without one, a new account has $1 of credit for 7 days. When Magpie first ran that way, in November 2026, Fly.io also stopped the server five minutes after every start, so pages took seconds to open and Ask replies were cut short. If your pages are slow, look for `Trial machine stopping` in `fly logs -a <your app>`.
+
+Get a copy of this folder first:
+
+```sh
+git clone https://github.com/diet103/magpie.git
+cd magpie
+```
+
+No git? On the GitHub page, press Code > Download ZIP, unzip it, and open a terminal in that folder. Then take one of three routes:
 
 1. **With Claude Code.** Open Claude Code in this folder and say "Set up my own Magpie". It asks for your email, first name and time zone (and a second person's, if there is one), runs the setup for you, and tells you how to connect. It never sees your passwords: they go to a file that you open. (It follows `docs/setup-with-claude.md`.)
 2. **Windows.** Double-click `setup.cmd`, or run `.\setup.cmd` in a terminal in this folder.
@@ -63,7 +92,9 @@ Then connect Claude, once per person, each from their own Claude account:
 2. Name `Magpie`, URL `https://<your app>.fly.dev/mcp` (setup puts it on your clipboard).
 3. Connect, sign in with your email and password, Allow. The phone app picks it up from your account.
 
-That's it. Talk to Claude; browse and fix things at `https://<your app>.fly.dev` (in Chrome on your phone: menu > Add to Home screen).
+That's it. Talk to Claude; browse and fix things at `https://<your app>.fly.dev` (in Chrome on your phone: menu > Add to Home screen). Until your first collection exists, the web app's Home page shows these same steps, and the address for Claude is always in Settings.
+
+**Who it is for.** A household of two, and it works for one. To add the second person later, run setup with `-NewPasswords` (`--new-passwords`): it asks for both emails again and makes new passwords for both, and nobody is signed out. More than two people can be let in by hand (`ALLOWED_USERS` and `LOGIN_PASSWORDS` under "Setting it up by hand"), and a test covers a third person signing in, but setup asks for two at most, some of the wording assumes two, and nobody has lived with it.
 
 ### Later, when you want them
 
@@ -73,7 +104,7 @@ That's it. Talk to Claude; browse and fix things at `https://<your app>.fly.dev`
 | `turn-on-ask.cmd` (or `.\setup.cmd -Assistant`) | `./setup.sh --assistant` | The Ask box in the web app: save and search by typing there, on your own Anthropic API key |
 | `.\setup.cmd -Backups` | `./setup.sh --backups` | Continuous off-site backups to Cloudflare R2. Until then, Fly.io keeps a daily snapshot of the disk for 14 days |
 | `.\setup.cmd -Google` | `./setup.sh --google` | "Sign in with Google" next to, or instead of, passwords. Add `-GoogleOnly` / `--google-only` to switch passwords off |
-| `.\setup.cmd -NewPasswords` | `./setup.sh --new-passwords` | New sign-in passwords. This does not sign anyone out: if a password may have leaked, also run `fly ssh console -C "node src/cli.ts signout-all --email <address>"` for each person |
+| `.\setup.cmd -NewPasswords` | `./setup.sh --new-passwords` | New sign-in passwords for everyone. It asks who may sign in again, so it is also how a second person is added later. This does not sign anyone out: if a password may have leaked, also run `fly ssh console -C "node src/cli.ts signout-all --email <address>"` for each person |
 | `.\setup.cmd -DryRun` | `./setup.sh --dry-run` | Shows what it would do and changes nothing |
 
 Every question the setup asks can be answered ahead of time with an option, so it can run with no typing:
@@ -101,6 +132,11 @@ Get the new version of this folder (`git pull`, or download it again over the ol
 data, passwords and settings. Updates only move forward: once a newer version has run, do not go back to an
 older one. `CHANGELOG.md` says what changed.
 
+Your `fly.toml` is how setup knows which app is yours: it holds the app's name and your time zone. If you
+start from a fresh copy without it, setup would create a second app. Run it once as
+`./setup.sh --app <your app> --timezone <your zone>` (`.\setup.cmd -App ... -TimeZone ...`) and it finds
+yours again.
+
 ### Without Fly.io
 
 `docs/docker.md` is for running it with Docker on your own machine or home server. It needs a public
@@ -124,7 +160,7 @@ Requires Node 26.13 or newer (it runs the TypeScript sources directly; there is 
 npm ci
 cp .env.example .env          # set ALLOWED_USERS and LOGIN_PASSWORDS
 npm run dev                   # http://localhost:8787
-npm test                      # about 200 tests: domain, privacy, query_sql sandbox, MCP, OAuth, passwords, web, photos and Ask, photo undo, previews and backups, closest names and related entries, dates and the calendar link, checklists, sealed storage, jobs, eval harness
+npm test                      # about 250 tests: domain, privacy, query_sql sandbox, MCP, OAuth, passwords, web, photos and Ask, photo undo, previews and backups, closest names and related entries, dates and the calendar link, checklists, sealed storage, jobs, eval harness
 ```
 
 To exercise the MCP server without a browser sign-in, use a personal access token:
@@ -226,7 +262,7 @@ What a sensitive collection holds is also encrypted in the database, with the sa
 
 What this protects, and what it does not:
 - A leaked disk snapshot or database backup does not expose photos, or what a sensitive collection holds. Titles, tags and dates are not encrypted, so keep a number out of the title. Everything in an ordinary collection is in the database in plain form.
-- Sealing starts when a collection is marked, or an entry is moved into one. Copies made before that hold it as it was until they expire: Fly's daily snapshots (14 days), the R2 history (30 days), the nightly copies (7 on the server; in R2, 35 days and 400 for the monthly ones), and any download. On the server itself, the earlier text can also remain in the database's log file until the next restart.
+- Sealing starts when a collection is marked, or an entry is moved into one. Copies made before that hold it as it was until they expire: Fly's daily snapshots (14 days), the R2 history (30 days), the nightly copies (7 on the server; in R2 for as long as your bucket keeps them, which is 35 days and 400 for the monthly ones only if you add the lifecycle rules suggested under "Setting it up by hand"), and any download. On the server itself, the earlier text can also remain in the database's log file until the next restart.
 - Moving an entry out of a sensitive collection, or merging it into an entry in an ordinary one, stores it plain again. Magpie says so when it happens.
 - Lose `FILES_KEY` and the photos and the sensitive entries are gone with it. The server will not start on a database whose sensitive entries its key does not open; put the right key back (`fly secrets set FILES_KEY=...`).
 - Whoever controls the Fly.io account can read both the key and the files. Use a strong Fly password and two-factor sign-in.
@@ -241,7 +277,7 @@ What this protects, and what it does not:
 - It fills the screen on a phone, with the message box pinned above the keyboard. While it works it says what it is doing ("Searching", "Saving"), and each reply carries a card for every entry it saved, changed or talked about; tap a card to open the entry.
 - Send up to four photos or PDFs with a message (or paste an image on a computer) and it reads them, files what matters and attaches them to the entry. Two photos in one message is how you save the front and back of a card.
 - Each person has their own conversation. It is kept while you are using it, so closing the app for a few minutes loses nothing, and it clears itself after an hour of quiet. **New chat**, pinned in the top corner, clears it straight away. Either way, what it saved stays saved. At most the last 16 messages are sent back to the model as context. Chats are not part of `query_sql` or "Download my data".
-- Limits: 15 messages a minute and 400 a day per person. Give the key its own workspace with a monthly spend limit.
+- What it costs depends on how much you use it: each message is a few calls to the model, billed to your key at Anthropic's prices. Give the key its own workspace with a monthly spend limit, so the bill has a ceiling. Limits in the app: 15 messages a minute and 400 a day per person.
 - Set `ASSISTANT_MODEL` (default `claude-sonnet-5-5`) to change the model, for example `fly secrets set ASSISTANT_MODEL=claude-haiku-5-5` for lower cost. To switch it off: `fly secrets unset ANTHROPIC_API_KEY`.
 - It is set up to answer quickly: the list of collections is handed to the model with each message, the instructions are cached between steps, and the model runs at low effort. If saves start coming out wrong, raise it with `fly secrets set ASSISTANT_EFFORT=medium`. Settings shows which model Ask uses and whether web research is on.
 
@@ -296,7 +332,7 @@ Pages you have opened, and the photos on them, are kept on the phone: the previe
 
 ## Testing the tool design with Claude
 
-`scripts/eval.ts` sends 26 scripted conversations (new place, repeat visit, "7 out of 10", "last Friday", dinner and a movie, a misspelled name, gift ideas, undo, corrections, questions) to the Anthropic API with the server's real tools and instructions, runs the tool calls against a fresh seeded database, and scores the outcome.
+`scripts/eval.ts` sends 27 scripted conversations (new place, repeat visit, "7 out of 10", "last Friday", dinner and a movie, a misspelled name, gift ideas, undo, corrections, questions) to the Anthropic API with the server's real tools and instructions, runs the tool calls against a fresh seeded database, and scores the outcome.
 
 ```sh
 ANTHROPIC_API_KEY=... npm run eval                         # target: 90% or better

@@ -6,11 +6,11 @@
 //  3. Something shared into the app from another app is parked for the chat page.
 // Anything that changes data (every request that is not a GET) clears the kept pages first, so a page is never
 // shown from before your own change. Reaching a sign-in page clears pages and photos alike.
-const VERSION = 'tracker-shell-21';
+const VERSION = 'tracker-shell-22';
 const SHELL = [
-  '/static/app.css?v=21',
-  '/static/app.js?v=21',
-  '/static/htmx.min.js?v=21',
+  '/static/app.css?v=22',
+  '/static/app.js?v=22',
+  '/static/htmx.min.js?v=22',
   '/static/icons/icon.svg',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',

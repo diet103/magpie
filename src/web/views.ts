@@ -187,6 +187,33 @@ export function hiddenDatesPage(o: { items: Upcoming[]; csrf: string; flash?: Ht
   </section>`;
 }
 
+/** The address to paste into Claude, with a copy button. Shown in the first-run steps and in Settings. */
+function connectorAddress(mcpUrl: string): Html {
+  return html`<p class="address"><code>${mcpUrl}</code>${copyButton(mcpUrl, 'the address for Claude')}</p>`;
+}
+
+/** What a new household sees on Home until its first collection exists: how to connect Claude and what to say. */
+function gettingStarted(mcpUrl: string, askOn: boolean): Html {
+  return html`<section class="start">
+    <h2>Getting started</h2>
+    <ol>
+      <li>
+        <strong>Connect Claude.</strong> On claude.ai, open Customize › Connectors › Add custom connector and paste this address:
+        ${connectorAddress(mcpUrl)}
+        Press Connect, sign in the same way you did here, and choose Allow. The Claude phone app picks it up from your account. Each person does this once, from their own Claude account.
+      </li>
+      <li>
+        <strong>Tell Claude something</strong>, the way you would say it out loud:
+        <p class="said">“we went to that new pho place tonight, loved the brisket pho, service was slow, 4 out of 5”</p>
+        Claude files it and makes a collection for it. Later, ask “what was that pho place we liked?”
+        ${askOn ? html`You can also type it in <a href="/ask">Ask</a>, right here.` : ''}
+      </li>
+      <li><strong>Keep ${APP_NAME} on your phone.</strong> In your browser's menu, choose Add to Home screen.</li>
+    </ol>
+    <p class="muted small">These steps go away once your first collection exists. The address stays in Settings.</p>
+  </section>`;
+}
+
 export function homePage(o: {
   overview: CollectionOverview[];
   /** Collections this person has pinned; they are already first in `overview`. */
@@ -200,6 +227,10 @@ export function homePage(o: {
   /** Dates in the same stretch that this person has hidden. */
   hiddenCount: number;
   recent: ActivityItem[];
+  /** The address Claude's connector needs, for the first-run steps. */
+  mcpUrl: string;
+  /** Whether the Ask box is switched on. */
+  askOn: boolean;
   csrf: string;
   tz: string;
   flash?: Html | string;
@@ -212,6 +243,7 @@ export function homePage(o: {
     </form>
     <ul id="live-results" class="entries"></ul>
   </section>
+  ${o.overview.length === 0 ? gettingStarted(o.mcpUrl, o.askOn) : ''}
   ${o.pinned.length
     ? html`<section>
         <h2>Pinned</h2>
@@ -236,7 +268,7 @@ export function homePage(o: {
     : ''}
   <section>
     <h2>Collections</h2>
-    ${o.overview.length === 0 ? html`<p class="muted">No collections yet. Tell Claude about something you did, or create one below.</p>` : ''}
+    ${o.overview.length === 0 ? html`<p class="muted">No collections yet. Claude makes them as you tell it things, or you can create one below.</p>` : ''}
     <ul class="cards">
       ${o.overview.map(
         ({ collection: c, entryCount }) => html`<li class="card">
@@ -1018,6 +1050,8 @@ function offsiteLine(on: boolean, photos: AppDeps['backups']['photos']): string 
 
 export function settingsPage(o: {
   user: { display_name: string; email: string };
+  /** The address Claude's connector needs. */
+  mcpUrl: string;
   grants: { family_id: string; client: string; created_at: string; last_used_at: string | null }[];
   pats: { token_hash: string; label: string | null; expires_at: string; last_used_at: string | null }[];
   sessions: { id_hash: string; current: boolean; user_agent: string | null; last_seen_at: string | null }[];
@@ -1049,8 +1083,8 @@ export function settingsPage(o: {
     </ul>
   </section>
   <section>
-    <h2>Connected apps</h2>
-    ${o.grants.length === 0 ? html`<p class="muted">None. Connect the tracker in Claude under Customize › Connectors.</p>` : ''}
+    <h2 id="connect">Connected apps</h2>
+    ${o.grants.length === 0 ? html`<p class="muted">None yet.</p>` : ''}
     <ul class="plain">
       ${o.grants.map(
         (g) => html`<li class="row wrap">
@@ -1059,6 +1093,8 @@ export function settingsPage(o: {
         </li>`,
       )}
     </ul>
+    <p class="muted small">To connect Claude, open Customize › Connectors › Add custom connector on claude.ai and paste this address. Each person connects from their own Claude account.</p>
+    ${connectorAddress(o.mcpUrl)}
   </section>
   <section>
     <h2>Personal access tokens</h2>
